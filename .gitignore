@@ -1,0 +1,32 @@
+# ビルド成果物
+dist/
+build/
+Output/
+*.spec
+
+# 実行時に生成される進捗・作業ファイル
+progress.json
+tmp_ad_images/
+
+# 個人情報・実データを含むため除外
+data/
+
+# Python関連
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# OS・エディタ関連
+.DS_Store
+Thumbs.db
+.vscode/
+# 旧バージョン・補助スクリプト（公開不要）
+V2.3_donation_letter_generator.py
+build_exe.py
+install_shortcut.py
+自治会業務のPython自動化_donation_letter_generator.py
+# 旧バージョン（公開不要）
+2605141_donation_letter_generator.py
+260514donation_letter_generator.py
