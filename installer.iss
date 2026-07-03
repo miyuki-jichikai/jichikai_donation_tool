@@ -4,7 +4,7 @@
 ; ===================================================================
 
 #define MyAppName "三幸町自治会 寄付依頼書生成ツール"
-#define MyAppVersion "2.7.0"
+#define MyAppVersion "2.8.0"
 #define MyAppPublisher "久野耕司"
 #define MyAppExeName "jichikai_donation_tool.exe"
 

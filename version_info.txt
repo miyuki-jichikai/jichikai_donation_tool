@@ -1,7 +1,7 @@
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(2,4,0,0),
-    prodvers=(2,4,0,0),
+    filevers=(2,8,0,0),
+    prodvers=(2,8,0,0),
     mask=0x3f,
     flags=0x0,
     OS=0x40004,
@@ -15,12 +15,12 @@ VSVersionInfo(
         u'041104b0',
         [StringStruct(u'CompanyName', u'三幸町自治会'),
          StringStruct(u'FileDescription', u'寄付依頼書生成ツール'),
-         StringStruct(u'FileVersion', u'2.4.0.0'),
+         StringStruct(u'FileVersion', u'2.8.0.0'),
          StringStruct(u'InternalName', u'jichikai_donation_tool'),
          StringStruct(u'LegalCopyright', u'Copyright 2026 久野耕司'),
          StringStruct(u'OriginalFilename', u'jichikai_donation_tool.exe'),
          StringStruct(u'ProductName', u'三幸町自治会 寄付依頼書生成ツール'),
-         StringStruct(u'ProductVersion', u'2.4.0.0')])
+         StringStruct(u'ProductVersion', u'2.8.0.0')])
       ]),
     VarFileInfo([VarStruct(u'Translation', [0x411, 1200])])
   ]

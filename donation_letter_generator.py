@@ -1,7 +1,11 @@
 # ============================================================
 # 寄付依頼書 自動生成ツール
-# donation_letter_generator.py  v2.7
+# donation_letter_generator.py  v2.8
 # ============================================================
+# 変更点 (v2.7 → v2.8):
+#   - Excel列構成の変更に対応（X列は「敬称」に変更／プログラムページはAB列に移動）
+#   - バージョン表示位置を画面右上から右下→「中断して保存」ボタン直上（右寄せ）に変更
+#     （右下固定だと、キャンバスサイズが小さくなった際にボタンと重なる不具合があったため）
 # 変更点 (v2.6 → v2.7):
 #   - EXE化(--onefile)時にprogress.jsonの保存先が毎回変わってしまうバグを修正
 #     （__file__がPyInstallerの一時展開フォルダを指していたため。
@@ -88,7 +92,7 @@ def get_base_dir():
         return os.path.dirname(os.path.abspath(__file__))
 
 
-APP_VERSION   = "v2.7"
+APP_VERSION   = "v2.8"
 
 BASE_DIR      = get_base_dir()
 DATA_DIR      = os.path.join(BASE_DIR, "data")
@@ -164,7 +168,8 @@ def load_excel(excel_path=None):
       I列(8) : ふりがな
       J列(9) : 昨年と同じか
       K列(10): 記載事項
-      X列(23): プログラムページ
+      X列(23): 敬称
+      AB列(27): プログラムページ
     """
     df = pd.read_excel(excel_path or EXCEL_FILE, header=0, dtype=str)
  
@@ -175,15 +180,15 @@ def load_excel(excel_path=None):
         df[g_col_name], errors='coerce').fillna(0).astype(int)
     df['_25寄付金'] = df['_金額'].copy()
  
-    # ── X列（24列目・0始まりで23番目）のプログラムページを取得 ──
-    if len(df.columns) > 23:
-        x_col_name = df.columns[23]   # X列
-        print(f"  → プログラムページ(X列): 「{x_col_name}」を使用")
+    # ── AB列（28列目・0始まりで27番目）のプログラムページを取得 ──
+    if len(df.columns) > 27:
+        ab_col_name = df.columns[27]   # AB列
+        print(f"  → プログラムページ(AB列): 「{ab_col_name}」を使用")
         df['_page'] = pd.to_numeric(
-            df[x_col_name], errors='coerce').fillna(0).astype(int)
+            df[ab_col_name], errors='coerce').fillna(0).astype(int)
     else:
         df['_page'] = 0
-        print("  ⚠ X列「プログラムページ」が見つかりません。全行0として扱います。")
+        print("  ⚠ AB列「プログラムページ」が見つかりません。全行0として扱います。")
  
     # ── A列のIDに「内」または「外」が含まれる行を抽出 ──
     # 「内」→ 町内寄付 / 「外」→ 町外寄付 に相当
@@ -595,11 +600,6 @@ class AdSelectorGUI:
                       f"期待サイズ: 幅{w_mm}mm × 高さ{h_mm}mm",
                  font=("Meiryo", 11, "bold"), fg="navy").pack(pady=4)
  
-        # バージョン表示（画面右上）
-        tk.Label(root, text=APP_VERSION,
-                 font=("Meiryo", 8), fg="gray").place(
-                     relx=1.0, x=-6, y=4, anchor="ne")
- 
         # ── ページ送りコントロール（上段）──────────
         nav_frame = tk.Frame(root)
         nav_frame.pack(pady=(4, 0))
@@ -644,6 +644,12 @@ class AdSelectorGUI:
         self.canvas.bind("<B1-Motion>",       self.on_drag)
         self.canvas.bind("<ButtonRelease-1>", self.on_release)
  
+        # バージョン表示（アクションボタンの真上・右寄せ）
+        version_frame = tk.Frame(root)
+        version_frame.pack(fill=tk.X, padx=10)
+        tk.Label(version_frame, text=APP_VERSION,
+                 font=("Meiryo", 8), fg="gray").pack(side=tk.RIGHT)
+
         # アクションボタン
         btn_frame = tk.Frame(root)
         btn_frame.pack(pady=6)
@@ -911,7 +917,7 @@ def select_files_dialog(root, last_dir=None):
  
 def main():
     print("=" * 55)
-    print("  寄付依頼書 自動生成ツール  v2.7")
+    print("  寄付依頼書 自動生成ツール  v2.8")
     print("=" * 55)
  
     # フォルダ作成（TMP_DIRのみ。OUTPUT_DIRはExcel選択後に決定）
@@ -989,7 +995,7 @@ def main():
         company_id   = str(row.iloc[0])            # A列：ID
         company_name = str(row.iloc[2])            # C列：会社・店名・氏名
         amount       = int(row['_金額'])
-        f_page       = int(row.get('_page', 0))   # X列：プログラムページ
+        f_page       = int(row.get('_page', 0))   # AB列：プログラムページ
  
         # ── 表示開始ページの決定 ──────────────────
         # ① F列に番号あり → そのページを開く
