@@ -1,7 +1,7 @@
 # 寄付依頼書作成ツール
 ## Jichikai Donation Letter Generator
 
-三幸町自治会 企業寄付依頼書 自動生成ツール
+三幸町自治会 企業寄付依頼書 自動生成ツール（現在バージョン: v2.8）
 
 ---
 
@@ -10,8 +10,9 @@
 ```
 Jichikai_donation_tool/
   donation_letter_generator.py   ← メインスクリプト
-  build_exe.py                   ← EXEファイル作成スクリプト
-  install_shortcut.py            ← スタートメニュー登録スクリプト
+  installer.iss                  ← Inno Setup インストーラースクリプト
+  version_info.txt               ← EXEのバージョン情報（PyInstaller用）
+  app_icon_final.ico             ← アプリアイコン
   README.md                      ← このファイル
   data/                          ← 入力ファイル置き場（GitHubにはアップしない）
     （Excelファイル）
@@ -19,11 +20,22 @@ Jichikai_donation_tool/
     （Wordテンプレートファイル）
   output/                        ← 出力ファイル置き場（自動生成）
   tmp_ad_images/                 ← 一時画像フォルダ（自動生成）
+  progress.json                  ← 中断・再開用の進捗ファイル（自動生成）
 ```
 
 ---
 
-## 必要な環境
+## 一般ユーザー向け：インストール方法
+
+開発環境を用意しなくても、以下の手順でそのまま使用できます。
+
+1. [Releases](https://github.com/miyuki-jichikai/jichikai_donation_tool/releases) ページから最新版の `jichikai_donation_tool_setup.exe` をダウンロード
+2. ダウンロードしたインストーラーを実行（管理者権限は不要です）
+3. インストール後、スタートメニューまたはデスクトップのショートカットから起動
+
+---
+
+## 開発環境（コードを修正する場合）
 
 - Windows 11
 - Python 3.x
@@ -36,21 +48,17 @@ pip install pdfplumber pillow python-docx openpyxl pdf2image pyinstaller
 - poppler（PATH設定済みであること）
   - https://github.com/oschwartz10612/poppler-windows/releases
 
----
-
-## 初回セットアップ
-
-### 1. ファイルを配置する
+### ファイルを配置する
 
 `data/` フォルダに以下のファイルを置く：
 
 | ファイル名 | 内容 |
 |-----------|------|
-| `250831_プログラム広告掲載リストTEST.xlsx` | 企業情報・ページ番号一覧 |
-| `ad_list.pdf` | 昨年のプログラム（広告掲載）|
+| `（年月日）_プログラム広告掲載リストTEST.xlsx` | 企業情報・ページ番号一覧 |
+| `ad_list.pdf` | 昨年のプログラム（広告掲載） |
 | `企業寄付申込書.dotx` | Wordテンプレート |
 
-### 2. スクリプトを実行する
+### スクリプトを実行する
 
 ```
 python donation_letter_generator.py
@@ -75,32 +83,60 @@ python donation_letter_generator.py
 
 ---
 
-## EXE化してスタートメニューに登録する手順
+## EXE化・インストーラー作成手順（開発者向け）
 
-### Step 1: EXEファイルを作成
-```
-python build_exe.py
-```
-→ `dist/donation_letter_generator.exe` が生成されます
+### Step 1: バージョン番号を更新
 
-### Step 2: スタートメニューに登録
+以下3箇所のバージョン番号を揃えて更新する：
+
+- `donation_letter_generator.py` の `APP_VERSION`
+- `version_info.txt` の `filevers` / `prodvers` / `FileVersion` / `ProductVersion`
+- `installer.iss` の `MyAppVersion`
+
+### Step 2: EXEファイルを作成（PyInstaller）
+
+```powershell
+python -m PyInstaller `
+  --onefile `
+  --windowed `
+  --icon="app_icon_final.ico" `
+  --name="jichikai_donation_tool" `
+  --version-file="version_info.txt" `
+  --noupx `
+  donation_letter_generator.py
 ```
-python install_shortcut.py
+
+→ `dist/jichikai_donation_tool.exe` が生成されます
+
+### Step 3: インストーラーを作成（Inno Setup）
+
+`installer.iss` をInno Setup Compilerで開き、「Build」→「Compile」を実行する。
+
+→ `Output/jichikai_donation_tool_setup.exe` が生成されます
+
+### Step 4: GitHubへ公開
+
+```powershell
+git add .
+git commit -m "vX.X: 変更内容"
+git push
 ```
-→ スタートメニューに「**寄付依頼書作成ツール**」として登録されます
+
+GitHubの [Releases](https://github.com/miyuki-jichikai/jichikai_donation_tool/releases) ページから新しいタグ・Releaseを作成し、`jichikai_donation_tool_setup.exe` をAssetとして添付して公開する。
 
 ---
 
-## Excelファイルの列構成
+## Excelファイルの列構成（v2.8時点）
 
 | 列 | 内容 |
 |----|------|
-| A列 | 種別（町内寄付・町外寄付・特別寄付） |
-| B列 | ID |
-| E列 | 会社名・店名・氏名 |
-| F列 | プログラムページ番号 |
-| G列 | 住所 |
-| J列 | 寄付金額（年号は毎年変更） |
+| A列 | ID |
+| C列 | 会社名・店名・氏名 |
+| G列 | 寄付金額（年号は毎年変更） |
+| X列 | 敬称 |
+| AB列 | プログラムページ番号 |
+
+※列の位置は年度によって変更される場合があります。実際にスクリプトを実行し、コンソール（VSCodeのターミナル）に表示される列名を確認してください。
 
 ## 広告サイズ対応表
 
@@ -117,18 +153,8 @@ python install_shortcut.py
 
 ## 年度更新時の注意
 
-毎年、Excelの J列の列名（例：「25年寄付金」）が変わります。
-`donation_letter_generator.py` の以下の行を更新してください：
-
-```python
-df['25年寄付金'] = pd.to_numeric(df['25年寄付金'], ...)
-```
-
-↓ 例：来年は
-
-```python
-df['26年寄付金'] = pd.to_numeric(df['26年寄付金'], ...)
-```
+毎年、Excelの寄付金額列の列名（例：「25年寄付金」）が変わります。
+`donation_letter_generator.py` は列名ではなく**列の位置（G列）**で寄付金額を取得する仕様のため、列の位置が変わらない限り、コードの変更は不要です。列の位置自体が変わった場合は、列番号（0始まりのインデックス）を修正してください。
 
 ---
 
