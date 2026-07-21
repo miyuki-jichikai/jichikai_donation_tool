@@ -11,6 +11,10 @@ tmp_ad_images/
 # 個人情報・実データを含むため除外
 data/
 
+# poppler本体（サイズが大きいためGitHubには上げない。
+# ビルド時にローカルのリポジトリ直下に配置するだけでよい）
+poppler_bin/
+
 # Python関連
 __pycache__/
 *.pyc

@@ -1,7 +1,7 @@
 # 寄付依頼書作成ツール
 ## Jichikai Donation Letter Generator
 
-三幸町自治会 企業寄付依頼書 自動生成ツール（現在バージョン: v2.8）
+三幸町自治会 企業寄付依頼書 自動生成ツール（現在バージョン: v2.9）
 
 ---
 
@@ -14,6 +14,8 @@ Jichikai_donation_tool/
   version_info.txt               ← EXEのバージョン情報（PyInstaller用）
   app_icon_final.ico             ← アプリアイコン
   README.md                      ← このファイル
+  poppler_bin/                   ← poppler本体（PDF→画像変換に必要。GitHubにはアップしない／
+                                     配布時にEXEと同じフォルダに同梱する）
   data/                          ← 入力ファイル置き場（GitHubにはアップしない）
     （Excelファイル）
     （PDFファイル）
@@ -29,9 +31,21 @@ Jichikai_donation_tool/
 
 開発環境を用意しなくても、以下の手順でそのまま使用できます。
 
-1. [Releases](https://github.com/miyuki-jichikai/jichikai_donation_tool/releases) ページから最新版の `jichikai_donation_tool_setup.exe` をダウンロード
-2. ダウンロードしたインストーラーを実行（管理者権限は不要です）
+1. [Releases](https://github.com/miyuki-jichikai/jichikai_donation_tool/releases) ページから最新版の `jichikai_donation_tool_setup.zip` をダウンロードし、右クリック→「すべて展開」で解凍する
+2. 解凍してできた `jichikai_donation_tool_setup.exe` を実行（管理者権限は不要です）
 3. インストール後、スタートメニューまたはデスクトップのショートカットから起動
+
+### ⚠ インストール時に警告が出た場合
+
+このインストーラーは個人・自治会内での配布用のため、Microsoftへの発行元登録（コード署名）を行っていません。
+そのため、インストーラーを実行すると Windows から次のような警告が表示されることがあります。
+
+- ブラウザのダウンロードバーに「このファイルは危険な場合があります」「保持しますか？」等の表示が出た場合
+  → **「保持」または「詳細情報」→「実行」**を選んでください
+- 実行時に「WindowsによってPCが保護されました」という青い画面（SmartScreen）が出た場合
+  → **「詳細情報」をクリック→表示された「実行」ボタン**を押してください
+
+いずれも、既知のソフトであれば安全に進めて問題ありません。表示が不安な場合は、開発者（三幸町自治会）にご確認ください。
 
 ---
 
@@ -45,8 +59,13 @@ Jichikai_donation_tool/
 pip install pdfplumber pillow python-docx openpyxl pdf2image pyinstaller
 ```
 
-- poppler（PATH設定済みであること）
-  - https://github.com/oschwartz10612/poppler-windows/releases
+- poppler
+  - https://github.com/oschwartz10612/poppler-windows/releases から最新版をダウンロード・解凍
+  - 開発時：PATHを通しておけば `poppler_bin` フォルダが無くてもそのまま動作します
+    （`POPPLER_PATH` はシステムPATHへ自動フォールバックします）
+  - **配布用EXEを作る場合**：解凍した中の `Library\bin` フォルダを、このリポジトリ直下に
+    `poppler_bin` という名前でコピーしてください（PyInstaller・Inno Setupが自動的に同梱します）。
+    これにより、配布先のPCにpopplerが入っていなくてもアプリが動作します。
 
 ### ファイルを配置する
 
@@ -108,21 +127,52 @@ python -m PyInstaller `
 
 → `dist/jichikai_donation_tool.exe` が生成されます
 
+（PyInstallerのコマンド自体はv2.8までと同じです。popplerはEXEの中に
+　埋め込むのではなく、次のStep 3でEXEと同じフォルダに別途配置します）
+
 ### Step 3: インストーラーを作成（Inno Setup）
 
+事前に、リポジトリ直下に `poppler_bin` フォルダ（poppler-windows releasesの
+`Library\bin` の中身）を配置しておく（開発環境セットアップの節を参照）。
+
 `installer.iss` をInno Setup Compilerで開き、「Build」→「Compile」を実行する。
+（`poppler_bin` フォルダがEXEと同じ場所に自動的に同梱されます）
 
 → `Output/jichikai_donation_tool_setup.exe` が生成されます
 
 ### Step 4: GitHubへ公開
 
+公開する際は、**①ソースコードの更新**と**②インストーラー（実行ファイル）の公開**の、
+性質の異なる2つの作業を行います。
+
+**① ソースコード一式をリポジトリへpush（`git add .` で自動的にソースだけが対象になります）**
+
+`poppler_bin/`・`dist/`・`Output/`・`data/` は `.gitignore` で除外されているため、
+`git add .` を実行しても以下のようなソースファイルだけが対象になります：
+
+- `donation_letter_generator.py`
+- `installer.iss`
+- `version_info.txt`
+- `README.md`
+- `app_icon_final.ico`
+
 ```powershell
 git add .
-git commit -m "vX.X: 変更内容"
+git commit -m "v2.9: poppler同梱による配布先PC依存の解消"
 git push
 ```
 
-GitHubの [Releases](https://github.com/miyuki-jichikai/jichikai_donation_tool/releases) ページから新しいタグ・Releaseを作成し、`jichikai_donation_tool_setup.exe` をAssetとして添付して公開する。
+**② ビルドしたインストーラーをzipにして、Releaseのアセットとして公開**
+
+1. `Output\jichikai_donation_tool_setup.exe` を右クリック→「送る」→
+   「圧縮(zip形式)フォルダー」で `jichikai_donation_tool_setup.zip` を作成
+2. GitHubの [Releases](https://github.com/miyuki-jichikai/jichikai_donation_tool/releases) ページで
+   新しいタグ・Releaseを作成し、この **zipファイル**をAssetとして添付して公開する
+   （zipにする理由：ブラウザがexeを未確認の実行ファイルとして警告・ブロックし、
+   ダウンロード中にファイル名が変わってしまう現象を防ぐため）
+
+①と②は別々の場所に保存されます（①はリポジトリのコード、②はReleasesページのダウンロード用ファイル）。
+両方行って初めて、次にツールを使う人が最新のソースを見られ、かつ最新のインストーラーをダウンロードできる状態になります。
 
 ---
 

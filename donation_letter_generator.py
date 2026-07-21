@@ -1,7 +1,15 @@
 # ============================================================
 # 寄付依頼書 自動生成ツール
-# donation_letter_generator.py  v2.8
+# donation_letter_generator.py  v2.9
 # ============================================================
+# 変更点 (v2.8 → v2.9):
+#   - poppler未同梱が原因で他のPCにインストールすると
+#     PDFInfoNotInstalledError で起動時に落ちる不具合を修正
+#     （C:\poppler\Library\bin へのハードコードをやめ、
+#      EXEと同じフォルダの poppler_bin を自動検出するよう変更。
+#      無ければ従来通りシステムPATHから検索）
+#   - poppler未検出時、生の例外ダイアログではなく分かりやすい
+#     日本語のエラーメッセージを表示するよう変更
 # 変更点 (v2.7 → v2.8):
 #   - Excel列構成の変更に対応（X列は「敬称」に変更／プログラムページはAB列に移動）
 #   - バージョン表示位置を画面右上から右下→「中断して保存」ボタン直上（右寄せ）に変更
@@ -92,7 +100,7 @@ def get_base_dir():
         return os.path.dirname(os.path.abspath(__file__))
 
 
-APP_VERSION   = "v2.8"
+APP_VERSION   = "v2.9"
 
 BASE_DIR      = get_base_dir()
 DATA_DIR      = os.path.join(BASE_DIR, "data")
@@ -105,7 +113,15 @@ TEMPLATE_FILE = os.path.join(DATA_DIR, "企業寄付申込書.dotx")
 PROGRESS_FILE = os.path.join(BASE_DIR, "progress.json")
  
 # popplerのパス
-POPPLER_PATH  = r"C:\poppler\Library\bin"
+# ① EXE（または .py）と同じフォルダに "poppler_bin" フォルダがあれば、
+#    それを最優先で使う（配布先PCにpoppler未インストールでも動くようにするため）
+# ② 見つからない場合は None を渡し、pdf2imageにシステムのPATH環境変数から
+#    poppler本体を探させる（開発者PCで手動インストール済みのpoppler等に対応）
+_BUNDLED_POPPLER_DIR = os.path.join(BASE_DIR, "poppler_bin")
+if os.path.isdir(_BUNDLED_POPPLER_DIR):
+    POPPLER_PATH = _BUNDLED_POPPLER_DIR
+else:
+    POPPLER_PATH = None  # システムPATHから自動検出（従来通りの動作）
  
 # PDFの広告ページが何ページ目から始まるか（表紙・目次などを除いた開始ページ）
 PDF_AD_START_PAGE = 6  # ← このPDFは6ページ目から広告が始まる
@@ -207,8 +223,17 @@ def load_excel(excel_path=None):
 def pdf_to_images(pdf_path):
     """PDFを全ページ画像に変換して {ページ番号: PIL.Image} を返す"""
     print("PDFを画像に変換中（しばらくお待ちください）...")
-    images = convert_from_path(
-        pdf_path, dpi=150, poppler_path=POPPLER_PATH)
+    try:
+        images = convert_from_path(
+            pdf_path, dpi=150, poppler_path=POPPLER_PATH)
+    except Exception as e:
+        messagebox.showerror(
+            "PDF変換エラー",
+            "PDFの画像変換に失敗しました。\n\n"
+            "poppler（PDF処理に必要な部品）が見つかりませんでした。\n"
+            "インストーラーで再インストールするか、開発者にお問い合わせください。\n\n"
+            f"詳細: {e}")
+        sys.exit(1)
     page_map = {}
     for i, img in enumerate(images):
         page_num = PDF_AD_START_PAGE + i
@@ -917,7 +942,7 @@ def select_files_dialog(root, last_dir=None):
  
 def main():
     print("=" * 55)
-    print("  寄付依頼書 自動生成ツール  v2.8")
+    print(f"  寄付依頼書 自動生成ツール  {APP_VERSION}")
     print("=" * 55)
  
     # フォルダ作成（TMP_DIRのみ。OUTPUT_DIRはExcel選択後に決定）

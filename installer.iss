@@ -4,7 +4,7 @@
 ; ===================================================================
 
 #define MyAppName "三幸町自治会 寄付依頼書生成ツール"
-#define MyAppVersion "2.8.0"
+#define MyAppVersion "2.9.0"
 #define MyAppPublisher "久野耕司"
 #define MyAppExeName "jichikai_donation_tool.exe"
 
@@ -40,8 +40,11 @@ Name: "japanese"; MessagesFile: "compiler:Languages\Japanese.isl"
 Name: "desktopicon"; Description: "デスクトップにアイコンを作成する"; GroupDescription: "追加のアイコン:"; Flags: unchecked
 
 [Files]
-; 本体EXEのみ配布（同梱データはユーザーが各自用意するため含めない）
+; 本体EXE
 Source: "dist\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
+; poppler本体一式（PDF→画像変換に必要。配布先PCにpopplerが入っていなくても
+; 動作するように、EXEと同じフォルダに poppler_bin として同梱する）
+Source: "poppler_bin\*"; DestDir: "{app}\poppler_bin"; Flags: recursesubdirs ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
