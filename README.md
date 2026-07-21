@@ -143,12 +143,14 @@ python -m PyInstaller `
 ### Step 4: GitHubへ公開
 
 公開する際は、**①ソースコードの更新**と**②インストーラー（実行ファイル）の公開**の、
-性質の異なる2つの作業を行います。
+性質の異なる2つの作業を行います。①はコードの保管、②はダウンロード用ファイルの公開で、
+保存される場所がまったく別なので、両方とも行う必要があります。
 
-**① ソースコード一式をリポジトリへpush（`git add .` で自動的にソースだけが対象になります）**
+#### ① ソースコード一式をリポジトリへpush
 
-`poppler_bin/`・`dist/`・`Output/`・`data/` は `.gitignore` で除外されているため、
-`git add .` を実行しても以下のようなソースファイルだけが対象になります：
+`.gitignore` で `poppler_bin/`・`dist/`・`Output/`・`data/` を除外しているため、
+`git add .` を実行しても以下のようなソースファイルだけが対象になります
+（実行ファイルや個人データは含まれません）：
 
 - `donation_letter_generator.py`
 - `installer.iss`
@@ -162,14 +164,35 @@ git commit -m "v2.9: poppler同梱による配布先PC依存の解消"
 git push
 ```
 
-**② ビルドしたインストーラーをzipにして、Releaseのアセットとして公開**
+#### ② インストーラーをzip化してReleasesページで公開
 
-1. `Output\jichikai_donation_tool_setup.exe` を右クリック→「送る」→
-   「圧縮(zip形式)フォルダー」で `jichikai_donation_tool_setup.zip` を作成
-2. GitHubの [Releases](https://github.com/miyuki-jichikai/jichikai_donation_tool/releases) ページで
-   新しいタグ・Releaseを作成し、この **zipファイル**をAssetとして添付して公開する
+**準備：exeをzip化**
+
+1. エクスプローラーで `Output\jichikai_donation_tool_setup.exe` を右クリック
+2. 「送る」→「圧縮(zip形式)フォルダー」を選択
+3. 同じ場所に `jichikai_donation_tool_setup.zip` が作成される
    （zipにする理由：ブラウザがexeを未確認の実行ファイルとして警告・ブロックし、
    ダウンロード中にファイル名が変わってしまう現象を防ぐため）
+
+**GitHub側の操作**
+
+1. ブラウザで [Releases](https://github.com/miyuki-jichikai/jichikai_donation_tool/releases) ページを開く
+2. 右上あたりにある「**Draft a new release**」（日本語UIの場合は「新しいリリースを下書き」）ボタンをクリック
+3. 「**Choose a tag**」の入力欄に新しいバージョン番号、例えば `v2.9` と入力し、
+   下に出てくる「**Create new tag: v2.9 on publish**」をクリックして選択
+   （① で `git push` 済みの最新コードに対して、このタグが自動的に付けられます）
+4. 「**Release title**」に分かりやすいタイトルを入力
+   （例：`三幸町自治会 寄付依頼書生成ツール v2.9`）
+5. 本文欄（Describe this release）に変更点を書く
+   （例：`poppler同梱により、他のPCにインストールしても起動できない不具合を修正`）
+6. 画面下の方にある点線の四角い枠「**Attach binaries by dropping them here or selecting them**」に、
+   先ほど作った `jichikai_donation_tool_setup.zip` をドラッグ＆ドロップ
+   （または枠内をクリックしてファイル選択ダイアログから選ぶ）
+7. アップロードが完了する（zipのアイコンとファイル名が表示される）のを確認
+8. 一番下の緑色の「**Publish release**」ボタンをクリックして公開する
+
+公開後、Releasesページの一覧に新しいバージョンが表示され、そこから誰でも
+`jichikai_donation_tool_setup.zip` をダウンロードできるようになります。
 
 ①と②は別々の場所に保存されます（①はリポジトリのコード、②はReleasesページのダウンロード用ファイル）。
 両方行って初めて、次にツールを使う人が最新のソースを見られ、かつ最新のインストーラーをダウンロードできる状態になります。
